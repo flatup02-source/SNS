@@ -81,7 +81,8 @@ const S = {
   async delMedia(id) { await DB.del('media', id); },
   async settings() {
     const s = await DB.get('config', 'settings');
-    return s || { id: 'settings', notif: true, defPlat: ['instagram', 'twitter'] };
+    const defP = { id: 'settings', notif: true, defPlat: ['instagram', 'twitter'], persona: { worldview: '', character: '', rules: '' } };
+    return s || defP;
   },
   async saveSets(s) { s.id = 'settings'; await DB.put('config', s); },
   async migrateFromLocal() {
@@ -122,7 +123,7 @@ async function nav(p) { page = p; document.querySelectorAll('.nav-item').forEach
 async function render() {
   const m = document.getElementById('main-content'); m.innerHTML = '<div style="display:flex;justify-content:center;padding:100px"><div class="stat-icon" style="animation: bounce 1s infinite">🚀</div></div>';
   m.className = 'main-content fade-in';
-  const renderFn = { dashboard: pgDash, quickpost: pgQuick, create: pgCreate, media: pgMedia, posts: pgPosts, calendar: pgCal, templates: pgTpls, settings: pgSets }[page] || pgDash;
+  const renderFn = { dashboard: pgDash, quickpost: pgQuick, create: pgCreate, media: pgMedia, posts: pgPosts, calendar: pgCal, templates: pgTpls, aistrategy: pgAistrategy, settings: pgSets }[page] || pgDash;
   await renderFn(m);
 }
 
@@ -138,7 +139,8 @@ async function pgDash(el) {
     <div class="stat"><div class="stat-icon">📋</div><div class="stat-val">${ps.length}</div><div class="stat-lbl">総投稿</div></div>
     <div class="stat"><div class="stat-icon">⏰</div><div class="stat-val">${sc.length}</div><div class="stat-lbl">予約中</div></div>
     <div class="stat"><div class="stat-icon">📁</div><div class="stat-val">${ms.length}</div><div class="stat-lbl">メディア</div></div>
-    <div class="stat"><div class="stat-icon">🔥</div><div class="stat-val">${poSorted[0] ? calcROI(poSorted[0]) + '%' : '0%'}</div><div class="stat-lbl">最高反応率</div></div></div>
+    <div class="stat"><div class="stat-icon">🔥</div><div class="stat-val">${poSorted[0] ? calcROI(poSorted[0]) + '%' : '0%'}</div><div class="stat-lbl">最高反応率</div></div>
+    <div class="stat" onclick="nav('aistrategy')" style="cursor:pointer;background:var(--bg3)"><div class="stat-icon">🧠</div><div class="stat-val">JIT</div><div class="stat-lbl">戦略アシスト</div></div></div>
   <div class="dash-grid">
     <div><h2 class="sec-title">📅 本日の予定</h2><div class="card">${sc.length === 0 ? '<div class="empty"><p class="empty-d">予定はありません</p></div>' :
       sc.slice(0, 5).map(p => `<div class="dash-item" onclick="assist('${p.id}')"><span class="dash-time">${fmtTime(p.scheduledAt)}</span><div style="flex:1"><div class="ptitle">${esc(p.title)}</div></div>${stBadge(p.status)}</div>`).join('')}</div></div>
@@ -285,6 +287,89 @@ async function pgTpls(el) {
 }
 async function delT(id) { await S.delTpl(id); await render(); }
 async function editT(id) { const t = await S.tpl(id); editing = { ...t, id: undefined, status: 'draft' }; await nav('create'); }
+
+/**
+ * AI戦略センター Page
+ */
+async function pgAistrategy(el) {
+  const s = await S.settings();
+  const p = s.persona || { worldview: '', character: '', rules: '' };
+  el.innerHTML = `
+    <div class="page-hdr"><div><h1 class="page-title">🧠 AI戦略センター</h1><p class="page-sub">ハイブリッド型 AIコンテンツ・ファクトリー</p></div></div>
+    <div class="cr-layout" style="display:grid;grid-template-columns: 1.5fr 1fr;gap:20px">
+      <div class="card">
+        <div class="card-t">🎭 あなたの世界観（ペルソナ）設定</div>
+        <p class="page-sub" style="margin-bottom:16px">AIがあなたの代わりに出力する際の「核」となる設定です。</p>
+        <div class="fg"><label class="fl">世界観・口調</label><textarea class="ft" id="p-worldview" placeholder="例：専門的だが、ユーモアを忘れない親しみやすいキャラクター" style="height:120px">${esc(p.worldview)}</textarea></div>
+        <div class="fg"><label class="fl">キャラクター・役割</label><input class="fi" id="p-char" value="${esc(p.character)}" placeholder="例：AI感情戦略アシスタント"></div>
+        <div class="fg"><label class="fl">特殊ルール</label><input class="fi" id="p-rules" value="${esc(p.rules)}" placeholder="例：絵文字は控えめ、語尾は「〜ですね」"></div>
+        <button class="btn btn-p" onclick="savePersona()">✅ 役割定義を保存</button>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg3)">
+          <div class="card-t">⚡ JITプロンプト作成</div>
+          <p class="page-sub">カレンダーの予定から最強の指示書を生成</p>
+          <div class="fg"><label class="fl">予定のタイトルをペースト</label><input type="text" class="fi" id="jit-title" placeholder="例：【インスタ】新商品の開発秘話"></div>
+          <button class="btn btn-g" style="width:100%" onclick="genJit()">🔥 指示書を生成</button>
+          <div id="jit-res" style="display:none;margin-top:16px">
+            <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border);font-size:11px;max-height:150px;overflow-y:auto;white-space:pre-wrap;margin-bottom:8px" id="jit-txt"></div>
+            <button class="btn btn-p" style="width:100%" onclick="copyJit()">📋 コピー→Geminiを開く</button>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px"><div class="card-t">📖 運用ガイド</div><p style="font-size:12px;line-height:1.6;color:var(--text2)">
+          1. <strong>Googleカレンダー</strong>の通知タイトルをコピー<br>
+          2. ここに貼り付けてプロンプトを生成<br>
+          3. Gemini等で出力された文章を、このアプリの「新規作成」に貼り付けて各SNSへ投稿！
+        </p></div>
+      </div>
+    </div>`;
+}
+
+async function savePersona() {
+  const s = await S.settings();
+  s.persona = { worldview: document.getElementById('p-worldview').value, character: document.getElementById('p-char').value, rules: document.getElementById('p-rules').value };
+  await S.saveSets(s); toast('ペルソナ設定を保存しました', 'success');
+}
+
+async function genJit() {
+  const t = document.getElementById('jit-title').value; if (!t) return toast('タイトルを入力してください', 'warning');
+  const s = await S.settings(); const p = s.persona || {};
+  const prompt = `# 命令書: あなたは私の「${p.character || 'AIコンテンツアシスタント'}」です。
+
+## あなたの役割:
+SNS戦略の右腕として、指定されたテーマから人の心を動かす物語を生成してください。
+
+## 私の世界観（ペルソナ）:
+* 世界観・口調: ${p.worldview || '指定なし'}
+* ルール: ${p.rules || '指定なし'}
+
+## 今日のテーマ:
+「${t}」
+
+## 実行プロセス:
+以下のフォーマットで回答を生成してください。
+---
+【投稿文案】
+（ここに物語調の投稿文を生成）
+
+【ハッシュタグ案】
+#〇〇 #〇〇 #〇〇
+
+【一括コピー用テキスト】
+（ここに投稿文とハッシュタグを結合したテキストを生成）
+---`;
+  document.getElementById('jit-txt').innerText = prompt;
+  document.getElementById('jit-res').style.display = 'block';
+  toast('プロンプトを生成しました');
+}
+
+function copyJit() {
+  const t = document.getElementById('jit-txt').innerText;
+  navigator.clipboard.writeText(t).then(() => {
+    toast('コピーしました！Geminiへ移動します...');
+    setTimeout(() => window.open('https://gemini.google.com/app', '_blank'), 1000);
+  });
+}
 
 async function pgSets(el) {
   const s = await S.settings();

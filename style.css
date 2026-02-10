@@ -244,6 +244,10 @@ select {
   margin-top: 4px;
 }
 
+.page-hdr p {
+  max-width: 600px;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -338,6 +342,11 @@ select {
 .card:hover {
   box-shadow: var(--sh2);
   transform: translateY(-2px);
+}
+
+.card.ai-special {
+  background: var(--bg3);
+  border-left: 6px solid var(--accent);
 }
 
 .card-t {
@@ -1039,6 +1048,30 @@ select {
   font-size: 11px;
   color: var(--text3);
   margin-top: 2px;
+}
+
+/* AI Strategy Center Specifics */
+#jit-res {
+  animation: slideUp .4s ease;
+}
+
+#jit-txt {
+  line-height: 1.6;
+  font-family: var(--ff);
+  background: #fdfbff !important;
+  white-space: pre-wrap;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Toggle */
