@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SNS MultiPost - かんたん投稿管理</title>
+  <meta name="description" content="複数SNSへの投稿をかんたん管理。メディアストック、テンプレート、ワンクリック投稿アシスト＆CSV分析。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">🚀</div>
+          <span class="logo-text">MultiPost</span>
+        </div>
+        <button id="sidebar-close" class="sidebar-close" aria-label="閉じる">✕</button>
+      </div>
+      <ul class="nav-list">
+        <li><a href="#" data-page="dashboard" class="nav-item active"><span
+              class="nav-icon">🏠</span><span>ホーム</span></a></li>
+        <li><a href="#" data-page="quickpost" class="nav-item"><span class="nav-icon">⚡</span><span>クイック投稿</span></a>
+        </li>
+        <li><a href="#" data-page="create" class="nav-item"><span class="nav-icon">✏️</span><span>新規作成</span></a></li>
+        <li><a href="#" data-page="media" class="nav-item"><span class="nav-icon">📁</span><span>メディア</span></a></li>
+        <li><a href="#" data-page="posts" class="nav-item"><span class="nav-icon">📋</span><span>投稿一覧</span></a></li>
+        <li><a href="#" data-page="calendar" class="nav-item"><span class="nav-icon">📅</span><span>カレンダー</span></a>
+        </li>
+        <li><a href="#" data-page="templates" class="nav-item"><span class="nav-icon">📄</span><span>テンプレート</span></a>
+        </li>
+        <li><a href="#" data-page="settings" class="nav-item"><span class="nav-icon">⚙️</span><span>設定</span></a></li>
+      </ul>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header id="mobile-header" class="mobile-header">
+      <button id="menu-toggle" class="menu-toggle" aria-label="メニュー">☰</button>
+      <span class="mobile-title">🚀 MultiPost</span>
+      <button id="mobile-create-btn" class="mobile-create-btn" aria-label="クイック投稿">⚡</button>
+    </header>
+
+    <!-- Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Main -->
+    <main id="main-content" class="main-content"></main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div id="modal-content" class="modal-content"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
